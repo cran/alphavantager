@@ -1,3 +1,19 @@
+# alphavantager 0.1.1
+
+* Move `timetk` into Imports
+
+* Remove `tidyquant` and `tidyverse` from Suggests
+
+* Remove `lubridate` and `devtools` as Imports
+
+* Simplify internal API key retrieval
+
+* Fix API rate limited tests
+
+* Fix JSON performance
+
+* Reduce R version dependency to 3.3.0
+
 
 # alphavantager 0.1.0
 
