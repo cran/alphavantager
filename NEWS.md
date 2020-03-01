@@ -1,3 +1,9 @@
+# alphavantager 0.1.2
+
+* `av_get()` - Add support for ForEx using `symbol = "EUR/USD"` format
+
+* Potentially Breaking Changes - Changed `av_fun = "SECTOR"` returned data column names to "change" for the value of change during the performance period. 
+
 # alphavantager 0.1.1
 
 * Move `timetk` into Imports
