@@ -14,8 +14,22 @@
 #' @seealso [av_api_key()]
 #'
 #' @details
+#'
+#' __The `av_fun` argument replaces the API parameter “function”__ because function is a reserved name in R. All other arguments match the Alpha Vantage API parameters.
+#'
+#' __There is no need to specify the `apikey` parameter__ as an argument to av_get(). The required method is to set the API key using av_api_key("YOUR_API_KEY").
+#'
+#' __There is no need to specify the datatype parameter__ as an argument to av_get(). The function will return a tibble data frame.
+#'
+#' __Some data sets only return 100 rows by default.__ Change the parameter `outputsize = "full"` to get the full dataset.
+#'
 #' __Get more than one symbol.__ The Alpha Vantage API is setup to return one symbol
 #' per API call. Use the `tidyquant::tq_get()` API to get multiple symbols.
+#'
+#' __ForEx "FROM/TO" symbol details.__ FOREX symbols in the `av_get()` function are
+#' supplied in `"FROM/TO"` format, which are then parsed in the Alpha Vantage API
+#' into `from_currency` and `to_currency` API parameters. Usage example:
+#' `av_get(symbol = "EUR/USD", av_fun = "FX_DAILY")`
 #'
 #' @examples
 #' \dontrun{
@@ -26,10 +40,10 @@
 #' # ---- 1.0 STOCK TIME SERIES ----
 #'
 #' # 1.1 TIME SERIES INTRADAY
-#' av_get("MSFT", av_fun = "TIME_SERIES_INTRADAY", interval = "5min")
+#' av_get("MSFT", av_fun = "TIME_SERIES_INTRADAY", interval = "5min", outputsize = "full")
 #'
 #' # 1.2 TIME SERIES DAILY ADJUSTED
-#' av_get("MSFT", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+#' av_get("MSFT", av_fun = "TIME_SERIES_DAILY_ADJUSTED", outputsize = "full")
 #'
 #' # 1.3 QUOTE ENDPOINTS
 #' av_get("MSFT", av_fun = "GLOBAL_QUOTE")
@@ -37,13 +51,13 @@
 #' # ---- 2.0 FOREX ----
 #'
 #' # 2.1 CURRENCY EXCHANGE RATES
-#' data <- av_get("EUR/USD", av_fun = "CURRENCY_EXCHANGE_RATE")
+#' av_get("EUR/USD", av_fun = "CURRENCY_EXCHANGE_RATE")
 #'
 #' # 2.2 FX INTRADAY
-#' av_get("EUR/USD", av_fun = "FX_INTRADAY", interval = "5min")
+#' av_get("EUR/USD", av_fun = "FX_INTRADAY", interval = "5min", outputsize = "full")
 #'
 #' # 2.3. FX DAILY
-#' av_get("EUR/USD", av_fun = "FX_DAILY")
+#' av_get("EUR/USD", av_fun = "FX_DAILY", outputsize = "full")
 #'
 #' # ---- 3.0 TECHNICAL INDICATORS ----
 #'
@@ -117,17 +131,13 @@ av_get <- function(symbol, av_fun, ...) {
 
             if (av_fun == "SECTOR") {
                 # Sector Performance Cleanup ----
+                content_list$`Meta Data` <- NULL
                 content <- content_list %>%
-                    tibble::enframe() %>%
-                    dplyr::slice(-1) %>%
-                    dplyr::mutate(val = purrr::map(value, tibble::enframe)) %>%
-                    tidyr::unnest(val, .drop =T) %>%
-                    dplyr::mutate(val = purrr::map_chr(value, ~ .x[[1]] )) %>%
-                    dplyr::select(-value1) %>%
-                    dplyr::mutate(change = stringr::str_replace(val, "%", "") %>% as.numeric()) %>%
-                    dplyr::mutate(change = change / 100) %>%
-                    dplyr::select(-val, -value) %>%
-                    dplyr::rename(sector = name1, rank.group = name)
+                    purrr::map_dfr(tibble::as_tibble) %>%
+                    tibble::add_column(rank_group = names(content_list), .before = 1) %>%
+                    tidyr::gather("sector", "change", -rank_group) %>%
+                    dplyr::mutate(change = stringr::str_replace(change, "%", "") %>% as.numeric()) %>%
+                    dplyr::mutate(change = change / 100)
             } else {
                 # Technical Indicator Cleanup ----
                 content <- do.call(rbind, lapply(content_list[[2]], unlist)) %>%
@@ -136,6 +146,12 @@ av_get <- function(symbol, av_fun, ...) {
                     dplyr::mutate_if(is.character, as.numeric)
 
             }
+
+        }  else if (av_fun == "OVERVIEW") {
+            # Historical Data Cleanup ----
+            content <- content_list  %>%
+                    purrr::map_dfr(tibble::as_tibble) %>%
+                    tibble::add_column(rank_group = names(content_list), .before = 1)
 
         } else if (is_forex) {
             # ForEx Cleanup ----
@@ -182,5 +198,3 @@ av_get <- function(symbol, av_fun, ...) {
     return(content)
 
 }
-
-

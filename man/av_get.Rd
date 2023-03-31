@@ -23,8 +23,21 @@ Returns a tibble of financial data
 Get financial data from the Alpha Vantage API
 }
 \details{
+\strong{The \code{av_fun} argument replaces the API parameter “function”} because function is a reserved name in R. All other arguments match the Alpha Vantage API parameters.
+
+\strong{There is no need to specify the \code{apikey} parameter} as an argument to av_get(). The required method is to set the API key using av_api_key("YOUR_API_KEY").
+
+\strong{There is no need to specify the datatype parameter} as an argument to av_get(). The function will return a tibble data frame.
+
+\strong{Some data sets only return 100 rows by default.} Change the parameter \code{outputsize = "full"} to get the full dataset.
+
 \strong{Get more than one symbol.} The Alpha Vantage API is setup to return one symbol
 per API call. Use the \code{tidyquant::tq_get()} API to get multiple symbols.
+
+\strong{ForEx "FROM/TO" symbol details.} FOREX symbols in the \code{av_get()} function are
+supplied in \code{"FROM/TO"} format, which are then parsed in the Alpha Vantage API
+into \code{from_currency} and \code{to_currency} API parameters. Usage example:
+\code{av_get(symbol = "EUR/USD", av_fun = "FX_DAILY")}
 }
 \examples{
 \dontrun{
@@ -35,10 +48,10 @@ av_api_key("YOUR_API_KEY")
 # ---- 1.0 STOCK TIME SERIES ----
 
 # 1.1 TIME SERIES INTRADAY
-av_get("MSFT", av_fun = "TIME_SERIES_INTRADAY", interval = "5min")
+av_get("MSFT", av_fun = "TIME_SERIES_INTRADAY", interval = "5min", outputsize = "full")
 
 # 1.2 TIME SERIES DAILY ADJUSTED
-av_get("MSFT", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+av_get("MSFT", av_fun = "TIME_SERIES_DAILY_ADJUSTED", outputsize = "full")
 
 # 1.3 QUOTE ENDPOINTS
 av_get("MSFT", av_fun = "GLOBAL_QUOTE")
@@ -46,13 +59,13 @@ av_get("MSFT", av_fun = "GLOBAL_QUOTE")
 # ---- 2.0 FOREX ----
 
 # 2.1 CURRENCY EXCHANGE RATES
-data <- av_get("EUR/USD", av_fun = "CURRENCY_EXCHANGE_RATE")
+av_get("EUR/USD", av_fun = "CURRENCY_EXCHANGE_RATE")
 
 # 2.2 FX INTRADAY
-av_get("EUR/USD", av_fun = "FX_INTRADAY", interval = "5min")
+av_get("EUR/USD", av_fun = "FX_INTRADAY", interval = "5min", outputsize = "full")
 
 # 2.3. FX DAILY
-av_get("EUR/USD", av_fun = "FX_DAILY")
+av_get("EUR/USD", av_fun = "FX_DAILY", outputsize = "full")
 
 # ---- 3.0 TECHNICAL INDICATORS ----
 
